@@ -67,9 +67,9 @@ func (c *Client) CreateRepoDoc(amount int) {
 		book, err := c.CreateUserRepository(repoReq)
 		if err != nil {
 			log.Println(err)
-			continue
+			break
 		} else {
-			log.Printf("AutoCreate finish: %s\n", book.Slug)
+			log.Printf("AutoCreate finish: %s, id: %d\n", book.Slug, i)
 		}
 
 		// c.user 必不为空
@@ -85,7 +85,7 @@ func (c *Client) CreateRepoDoc(amount int) {
 				log.Println(err)
 				continue
 			} else {
-				log.Printf("create doc finish: %s\n", doc.Slug)
+				log.Printf("create doc finish: %s, id: %d\n", doc.Slug, j)
 			}
 		}
 	}

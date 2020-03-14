@@ -133,5 +133,5 @@ func TestClient_DeleteAutoCreate(t *testing.T) {
 func TestClient_CreateRepoDoc(t *testing.T) {
 	c := newClient()
 
-	c.CreateRepoDoc(1)
+	c.CreateRepoDoc(50)
 }
