@@ -47,8 +47,8 @@ func (c *Client) createRepository(path string, repoReq *CreateRepositoryRequest)
 	return rr.Data, decoder.Decode(rr)
 }
 
-func (c *Client) DeleteUserRepository(namespace string) (*modules.BookDetailSerializer, error) {
-	path := fmt.Sprintf(APIPath+APIReposDel, namespace)
+func (c *Client) DeleteRepository(namespace string) (*modules.BookDetailSerializer, error) {
+	path := fmt.Sprintf(APIPath+APIRepos, namespace)
 	req, err := c.newHTTPRequest(http.MethodDelete, path, nil)
 	if err != nil {
 		return nil, err

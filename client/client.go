@@ -15,7 +15,7 @@ const (
 	APIUser        = "/user"
 	APIUserRepos   = "/users/%s/repos"
 	APIGroupsRepos = "/groups/%s/repos"
-	APIReposDel    = "/repos/%s"
+	APIRepos       = "/repos/%s"
 	APIDocs        = "/repos/%s/docs"
 
 	UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"

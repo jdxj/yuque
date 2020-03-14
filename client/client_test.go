@@ -38,7 +38,7 @@ func TestClient_ListOwnUserRepositories(t *testing.T) {
 func TestClient_DeleteRepository(t *testing.T) {
 	c := newClient()
 
-	if bds, err := c.DeleteUserRepository("jdxj/xkcfoq"); err != nil {
+	if bds, err := c.DeleteRepository("jdxj/xkcfoq"); err != nil {
 		t.Fatalf("delete repository faild: %s\n", err)
 	} else {
 		fmt.Printf("%#v\n", bds)
@@ -116,4 +116,22 @@ func TestClient_CreateDoc(t *testing.T) {
 	}
 
 	fmt.Printf("%#v\n", dds)
+}
+
+func TestClient_CreateDocAmount(t *testing.T) {
+	c := newClient()
+
+	c.CreateDocAmount(10)
+}
+
+func TestClient_DeleteAutoCreate(t *testing.T) {
+	c := newClient()
+
+	c.DeleteAutoCreate()
+}
+
+func TestClient_CreateRepoDoc(t *testing.T) {
+	c := newClient()
+
+	c.CreateRepoDoc(1)
 }

@@ -1,5 +1,15 @@
 package modules
 
+type Doc struct {
+	Create bool `json:"create"`
+}
+
+type Abilities struct {
+	Update  bool `json:"update"`
+	Destroy bool `json:"destroy"`
+	Doc     Doc  `json:"doc"`
+}
+
 type BookSerializer struct {
 	ID           int             `json:"id"`
 	Type         string          `json:"type"`
@@ -28,10 +38,12 @@ type BookDetailSerializer struct {
 	ContentUpdatedAt string `json:"content_updated_at"`
 	Serializer       string `json:"_serializer"`
 
-	// 删除知识库返回的
+	// 删除知识库, 知识库详情返回的
 	Toc        string `json:"toc"`
 	PinnedAt   string `json:"pinned_at"`
 	ArchivedAt string `json:"archived_at"`
+
+	Abilities Abilities `json:"abilities"`
 }
 
 type UserSerializer struct {
