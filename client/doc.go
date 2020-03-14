@@ -1,9 +1,9 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/jdxj/yuque/modules"
@@ -16,18 +16,36 @@ func (c *Client) ListDoc(namespace string) ([]*modules.DocSerializer, error) {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	reader, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		data, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%s", data)
-	}
 
 	docListed := &DocListed{}
-	decoder := json.NewDecoder(resp.Body)
+	decoder := json.NewDecoder(reader)
 	return docListed.Data, decoder.Decode(docListed)
+}
+
+func (c *Client) CreateDoc(namespace string, docReq *CreateDocRequest) (*modules.DocDetailSerializer, error) {
+	path := fmt.Sprintf(APIPath+APIDocs, namespace)
+	data, err := json.Marshal(docReq)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.newHTTPRequest(http.MethodPost, path, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	reader, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	dc := &DocCreated{}
+	decoder := json.NewDecoder(reader)
+	return dc.Data, decoder.Decode(dc)
+
 }

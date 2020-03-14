@@ -1,8 +1,10 @@
 package client
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/jdxj/yuque/modules"
@@ -39,6 +41,13 @@ const (
 	Open
 )
 
+type Format string
+
+const (
+	Markdown Format = "markdown"
+	Lake            = "lake"
+)
+
 func NewClientToken(token string) (*Client, error) {
 	if token == "" {
 		return nil, fmt.Errorf("token can not be empty")
@@ -66,4 +75,22 @@ func (c *Client) newHTTPRequest(method, path string, body io.Reader) (*http.Requ
 	req.Header.Set("User-Agent", UserAgent)
 	req.Header.Set("X-Auth-Token", c.token)
 	return req, nil
+}
+
+func (c *Client) do(req *http.Request) (io.Reader, error) {
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s", data)
+	}
+	return bytes.NewBuffer(data), nil
 }

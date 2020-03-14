@@ -4,10 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/jdxj/yuque/client"
 )
 
 type Tmp struct {
-	Name string `json:"name"`
+	Name   string        `json:"name"`
+	Format client.Format `json:"format"`
+	Typ    client.Typ    `json:"typ"`
 }
 
 func TestJson(t *testing.T) {

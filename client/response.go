@@ -15,8 +15,8 @@ func NewCreateRepositoryRequestSlug(name, description string, typ Typ, public Pu
 		Name:        name,
 		Slug:        slug,
 		Description: description,
-		Public:      int(public),
-		Type:        string(typ),
+		Public:      public,
+		Type:        typ,
 	}
 	return crr
 }
@@ -25,8 +25,8 @@ type CreateRepositoryRequest struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
-	Public      int    `json:"public"`
-	Type        string `json:"type"`
+	Public      Public `json:"public"`
+	Type        Typ    `json:"type"`
 }
 
 type UserResponse struct {
@@ -47,4 +47,30 @@ type RepositoryDeleted struct {
 
 type DocListed struct {
 	Data []*modules.DocSerializer `json:"data"`
+}
+
+func NewCreateDocRequestSlug(title, body string, public Public, format Format) *CreateDocRequest {
+	slug := utils.GenRandString(SlugLength)
+	slug = strings.ToLower(slug)
+
+	cdr := &CreateDocRequest{
+		Title:  title,
+		Slug:   slug,
+		Public: public,
+		Format: format,
+		Body:   body,
+	}
+	return cdr
+}
+
+type CreateDocRequest struct {
+	Title  string `json:"title"`
+	Slug   string `json:"slug"`
+	Public Public `json:"public"`
+	Format Format `json:"format"`
+	Body   string `json:"body"`
+}
+
+type DocCreated struct {
+	Data *modules.DocDetailSerializer `json:"data"`
 }

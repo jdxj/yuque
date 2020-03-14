@@ -4,28 +4,32 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/jdxj/yuque/modules"
 )
 
-func (c *Client) CreateRepository(repoReq *CreateRepositoryRequest) (*modules.BookDetailSerializer, error) {
-	if repoReq == nil {
-		return nil, fmt.Errorf("invalid repository request param")
-	}
-
+func (c *Client) CreateUserRepository(repoReq *CreateRepositoryRequest) (*modules.BookDetailSerializer, error) {
 	if c.user == nil {
 		if _, err := c.User(); err != nil {
 			return nil, err
 		}
 	}
 
+	path := fmt.Sprintf(APIPath+APIUserRepos, c.user.Login)
+	return c.createRepository(path, repoReq)
+}
+
+func (c *Client) CreateGroupRepository(group string, repoReq *CreateRepositoryRequest) (*modules.BookDetailSerializer, error) {
+	path := fmt.Sprintf(APIPath+APIGroupsRepos, group)
+	return c.createRepository(path, repoReq)
+}
+
+func (c *Client) createRepository(path string, repoReq *CreateRepositoryRequest) (*modules.BookDetailSerializer, error) {
 	data, err := json.Marshal(repoReq)
 	if err != nil {
 		return nil, err
 	}
-	path := fmt.Sprintf(APIPath+APIUserRepos, c.user.Login)
 
 	req, err := c.newHTTPRequest(http.MethodPost, path, bytes.NewReader(data))
 	if err != nil {
@@ -33,19 +37,13 @@ func (c *Client) CreateRepository(repoReq *CreateRepositoryRequest) (*modules.Bo
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.httpClient.Do(req)
+	reader, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		data, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%s", data)
-	}
 
 	rr := &RepositoryCreated{}
-	decoder := json.NewDecoder(resp.Body)
+	decoder := json.NewDecoder(reader)
 	return rr.Data, decoder.Decode(rr)
 }
 
@@ -56,19 +54,13 @@ func (c *Client) DeleteUserRepository(namespace string) (*modules.BookDetailSeri
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	reader, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		data, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%s", data)
-	}
 
 	dur := &RepositoryDeleted{}
-	decoder := json.NewDecoder(resp.Body)
+	decoder := json.NewDecoder(reader)
 	return dur.Data, decoder.Decode(dur)
 }
 
@@ -87,8 +79,8 @@ func (c *Client) ListUserRepositories(login string) ([]*modules.BookSerializer, 
 	return c.listRepositories(path)
 }
 
-func (c *Client) ListGroupRepositories(login string) ([]*modules.BookSerializer, error) {
-	path := fmt.Sprintf(APIPath+APIGroupsRepos, login)
+func (c *Client) ListGroupRepositories(group string) ([]*modules.BookSerializer, error) {
+	path := fmt.Sprintf(APIPath+APIGroupsRepos, group)
 	return c.listRepositories(path)
 }
 
@@ -98,18 +90,12 @@ func (c *Client) listRepositories(path string) ([]*modules.BookSerializer, error
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	reader, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		data, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("%s", data)
-	}
 
 	reposList := &RepositoriesListed{}
-	decoder := json.NewDecoder(resp.Body)
+	decoder := json.NewDecoder(reader)
 	return reposList.Data, decoder.Decode(reposList)
 }

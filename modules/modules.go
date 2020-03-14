@@ -97,4 +97,7 @@ type DocDetailSerializer struct {
 	Cover             string `json:"cover"`
 	CustomDescription string `json:"custom_description"`
 	Serializer        string `json:"_serializer"`
+
+	// 创建时多出的
+	// creator
 }
