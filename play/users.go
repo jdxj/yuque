@@ -2,6 +2,7 @@ package play
 
 import (
 	"database/sql"
+	"math"
 	"strconv"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/astaxie/beego/logs"
 )
 
-const limit = 1
+const limit = math.MaxUint64
 
 func NewCounter() (*Counter, error) {
 	dsn := DSN()
@@ -101,4 +102,5 @@ func (c *Counter) Stop() {
 	close(c.stop)
 	c.db.Close()
 	logs.Debug("stop counter")
+	logs.GetBeeLogger().Flush()
 }

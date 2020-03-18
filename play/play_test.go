@@ -38,5 +38,5 @@ func TestCounter_Users(t *testing.T) {
 	}
 
 	c.Users()
-	c.db.Close()
+	c.Stop()
 }
