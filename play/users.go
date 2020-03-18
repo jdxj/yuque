@@ -13,6 +13,15 @@ import (
 	"github.com/astaxie/beego/logs"
 )
 
+//func DSN() string {
+//	return fmt.Sprintf("%s:%s@tcp(%s)/%s?loc=Local&parseTime=true",
+//		"root", "", "127.0.0.1", "yuque")
+//}
+//
+//func Token() string {
+//	return ""
+//}
+
 const limit = math.MaxUint64
 
 func NewCounter() (*Counter, error) {
