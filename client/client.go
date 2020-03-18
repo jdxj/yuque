@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/jdxj/yuque/modules"
@@ -91,7 +90,6 @@ func (c *Client) do(req *http.Request) (io.Reader, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	log.Printf("X-RateLimit-Remaining: %s\n", resp.Header.Get("X-RateLimit-Remaining"))
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

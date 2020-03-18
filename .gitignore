@@ -16,4 +16,5 @@
 
 .idea/
 res_test.go
-
+res.go
+*.log
