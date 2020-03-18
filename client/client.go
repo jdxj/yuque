@@ -55,8 +55,9 @@ func NewClientToken(token string) (*Client, error) {
 	}
 
 	c := &Client{
-		httpClient: &http.Client{},
-		token:      token,
+		httpClient:    &http.Client{},
+		token:         token,
+		namespaceTask: make(chan string),
 	}
 	return c, nil
 }
@@ -65,6 +66,9 @@ type Client struct {
 	httpClient *http.Client
 	token      string
 	user       *modules.UserSerializer
+
+	// play
+	namespaceTask chan string
 }
 
 func (c *Client) newHTTPRequest(method, path string, body io.Reader) (*http.Request, error) {

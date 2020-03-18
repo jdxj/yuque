@@ -2,6 +2,7 @@ package client
 
 import (
 	"log"
+	"sync"
 
 	"github.com/jdxj/yuque/utils"
 
@@ -61,8 +62,13 @@ func (c *Client) DeleteAutoCreate() {
 
 // 创建 amount 个知识库, 每个知识库有中有100个文档
 func (c *Client) CreateRepoDoc(amount int) {
+	go c.continueCreateRepo(amount)
+	c.continueCreate100Doc()
+}
+
+// continueCreateRepo 连续创建 auto create 知识库
+func (c *Client) continueCreateRepo(amount int) {
 	for i := 0; i < amount; i++ {
-		// 创建 auto create 知识库
 		repoReq := NewCreateRepositoryRequestSlug(RepositoryNamePrefix, "", Book, Open)
 		book, err := c.CreateUserRepository(repoReq)
 		if err != nil {
@@ -76,8 +82,29 @@ func (c *Client) CreateRepoDoc(amount int) {
 		user := c.user.Login
 		slug := book.Slug
 		namespace := user + "/" + slug
+		c.namespaceTask <- namespace
+	}
 
-		// 创建文档
+	close(c.namespaceTask)
+}
+
+func (c *Client) continueCreate100Doc() {
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			c.create100Doc()
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+	log.Println("wg done")
+}
+
+func (c *Client) create100Doc() {
+	for namespace := range c.namespaceTask {
 		for j := 0; j < 100; j++ {
 			title := utils.GenRandString(6)
 			docReq := NewCreateDocRequestSlug(title, title, Intranet, Markdown)
