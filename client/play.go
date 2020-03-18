@@ -33,7 +33,7 @@ func (c *Client) CreateDocAmount(amount int) {
 	for i := 0; i < amount; i++ {
 		log.Println("创建请求")
 		title := utils.GenRandString(6)
-		docReq := NewCreateDocRequestSlug(title, title, Intranet, Markdown)
+		docReq := NewCreateDocRequestSlug(title, title, Open, Markdown)
 
 		log.Println("发送数据")
 		if _, err := c.CreateDoc(autoCreated.Namespace, docReq); err != nil {
@@ -107,7 +107,7 @@ func (c *Client) create100Doc() {
 	for namespace := range c.namespaceTask {
 		for j := 0; j < 100; j++ {
 			title := utils.GenRandString(6)
-			docReq := NewCreateDocRequestSlug(title, title, Intranet, Markdown)
+			docReq := NewCreateDocRequestSlug(title, title, Open, Markdown)
 			if doc, err := c.CreateDoc(namespace, docReq); err != nil {
 				log.Println(err)
 				continue

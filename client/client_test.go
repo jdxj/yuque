@@ -109,7 +109,7 @@ func TestClient_CreateGroupRepository(t *testing.T) {
 func TestClient_CreateDoc(t *testing.T) {
 	c := newClient()
 
-	docReq := NewCreateDocRequestSlug("haha2", "this is a body", Intranet, Markdown)
+	docReq := NewCreateDocRequestSlug("haha2", "this is a body", Open, Markdown)
 	dds, err := c.CreateDoc("jdxj/mlakfd", docReq)
 	if err != nil {
 		t.Fatalf("%s", err)
@@ -134,4 +134,20 @@ func TestClient_CreateRepoDoc(t *testing.T) {
 	c := newClient()
 
 	c.CreateRepoDoc(50)
+}
+
+func TestClient_Users(t *testing.T) {
+	c := newClient()
+
+	user, err := c.Users("jdxj")
+	if err != nil {
+		t.Fatalf("%s\n", err)
+	}
+	fmt.Printf("use name: %#v\n", user)
+
+	user, err = c.Users("663581")
+	if err != nil {
+		t.Fatalf("%s\n", err)
+	}
+	fmt.Printf("use id: %#v\n", user)
 }

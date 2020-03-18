@@ -13,6 +13,7 @@ import (
 
 const (
 	APIPath        = "https://www.yuque.com/api/v2"
+	APIUsers       = "/users/%s"
 	APIUser        = "/user"
 	APIUserRepos   = "/users/%s/repos"
 	APIGroupsRepos = "/groups/%s/repos"
@@ -38,8 +39,10 @@ type Public int
 
 const (
 	Private Public = iota
-	Intranet
 	Open
+	SpaceMember
+	SpaceOpen
+	RepositoryMember
 )
 
 type Format string

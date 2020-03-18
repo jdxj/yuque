@@ -33,3 +33,25 @@ func (c *Client) User() (*modules.UserSerializer, error) {
 	c.user = ur.Data
 	return ur.Data, nil
 }
+
+func (c *Client) Users(login string) (*modules.UserSerializer, error) {
+	path := fmt.Sprintf(APIPath+APIUsers, login)
+	req, err := c.newHTTPRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	ur := &UserResponse{}
+	decoder := json.NewDecoder(reader)
+	if err := decoder.Decode(ur); err != nil {
+		return nil, err
+	}
+
+	c.user = ur.Data
+	return ur.Data, nil
+}
