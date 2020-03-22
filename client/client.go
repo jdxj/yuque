@@ -10,6 +10,8 @@ import (
 	"github.com/jdxj/yuque/modules"
 )
 
+var ErrNoFound = fmt.Errorf("http resp err: not found")
+
 const (
 	APIPath        = "https://www.yuque.com/api/v2"
 	APIUsers       = "/users/%s"
@@ -69,6 +71,10 @@ type Client struct {
 	token      string
 	user       *modules.UserSerializer
 
+	// status
+	// todo: 是否考虑并发?
+	xRateLimitRemaining string
+
 	// play
 	namespaceTask chan string
 }
@@ -91,13 +97,22 @@ func (c *Client) do(req *http.Request) (io.Reader, error) {
 	}
 	defer resp.Body.Close()
 
+	c.xRateLimitRemaining = resp.Header.Get("X-RateLimit-Remaining")
+
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	if resp.StatusCode != 200 {
+		if resp.StatusCode == 404 {
+			return nil, ErrNoFound
+		}
 		return nil, fmt.Errorf("%s", data)
 	}
 	return bytes.NewBuffer(data), nil
+}
+
+func (c *Client) XRateLimitRemaining() string {
+	return c.xRateLimitRemaining
 }

@@ -1,16 +1,17 @@
 package play
 
 import (
-	"database/sql"
 	"math"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/jdxj/yuque/client"
-
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/jdxj/yuque/db"
+	"github.com/jdxj/yuque/modules"
 
 	"github.com/astaxie/beego/logs"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 //func DSN() string {
@@ -25,45 +26,19 @@ import (
 const limit = math.MaxUint64
 
 func NewCounter() (*Counter, error) {
-	dsn := DSN()
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return nil, err
-	}
-
 	cli, err := client.NewClientToken(Token())
 	if err != nil {
 		return nil, err
 	}
-
 	stop := make(chan int)
 
-	go func() {
-		tickerPing := time.NewTicker(time.Second)
-		defer tickerPing.Stop()
-		tickerLog := time.NewTicker(time.Minute)
-		defer tickerLog.Stop()
-
-		for {
-			select {
-			case <-stop:
-				logs.Debug("stop db")
-				return
-
-			case <-tickerPing.C:
-				if err := db.Ping(); err != nil {
-					logs.Error("db ping error: %s", err)
-					return
-				}
-
-			case <-tickerLog.C:
-				logs.Debug("db ping in normal")
-			}
-		}
-	}()
+	ds, err := db.NewDataSource(DSN())
+	if err != nil {
+		return nil, err
+	}
 
 	c := &Counter{
-		db:   db,
+		ds:   ds,
 		cli:  cli,
 		stop: stop,
 	}
@@ -71,45 +46,79 @@ func NewCounter() (*Counter, error) {
 }
 
 type Counter struct {
-	start uint64
-	db    *sql.DB
-	stop  chan int
-
-	cli *client.Client
+	wg   sync.WaitGroup
+	ds   *db.DataSource
+	cli  *client.Client
+	stop chan int
 }
 
-func (c *Counter) Users() {
-	ticker := time.NewTicker(750 * time.Millisecond)
-	defer ticker.Stop()
+func (c *Counter) Users(start uint64) {
+	c.wg.Add(1)
+	go func() {
+		defer c.wg.Done()
+		ticker := time.NewTicker(750 * time.Millisecond)
+		defer ticker.Stop()
 
-	for i := uint64(0); i < limit; i++ {
-		<-ticker.C
+		for i := start; i < limit; i++ {
+			select {
+			case <-c.stop:
+				logs.Debug("stop users, id: %d", i)
+				return
 
-		id := strconv.FormatUint(i, 10)
-		user, err := c.cli.Users(id)
-		if err != nil {
-			logs.Error("id: %d, get user error: %s", i, err)
-			continue
+			case <-ticker.C:
+			}
+
+			id := strconv.FormatUint(i, 10)
+			user, err := c.cli.Users(id)
+			if err != nil {
+				if err == client.ErrNoFound {
+					continue
+				}
+				logs.Error("id: %d, get user error: %s", i, err)
+			} else {
+				if err := c.InsertUser(user); err != nil {
+					logs.Error("write to db err: %s", err)
+				}
+			}
 		}
-
-		// todo: write to db
-		if err := c.InsertUser(user.ID, user.FollowersCount, user.Type, user.Login, user.Name); err != nil {
-			logs.Error("write to db err: %s", err)
-		}
-	}
+	}()
 }
 
-func (c *Counter) InsertUser(id, followersCount int, typ, login, name string) error {
-	db := c.db
+func (c *Counter) InsertUser(user *modules.UserSerializer) error {
+	ds := c.ds
 
-	_, err := db.Exec("INSERT INTO user (id,type,login,name,followers_count) VALUES (?,?,?,?,?) ",
-		id, typ, login, name, followersCount)
+	_, err := ds.Exec("INSERT INTO user (id,type,login,name,followers_count) VALUES (?,?,?,?,?)",
+		user.ID, user.Type, user.Login, user.Name, user.FollowersCount)
 	return err
 }
 
-func (c *Counter) Stop() {
+func (c *Counter) Stop() error {
 	close(c.stop)
-	c.db.Close()
+	err := c.ds.Stop()
+	c.wg.Wait()
+
 	logs.Debug("stop counter")
 	logs.GetBeeLogger().Flush()
+	return err
+}
+
+func (c *Counter) Remaining() {
+	c.wg.Add(1)
+	go func() {
+		defer c.wg.Done()
+
+		ticker := time.NewTicker(2 * time.Minute)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-c.stop:
+				logs.Debug("stop remaining")
+				return
+
+			case <-ticker.C:
+				logs.Debug("X-RateLimit-Remaining: %s", c.cli.XRateLimitRemaining())
+			}
+		}
+	}()
 }

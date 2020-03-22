@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -20,7 +19,7 @@ func TestClient_User(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get user fail: %s\n", err)
 	}
-	fmt.Printf("%#v\n", user)
+	t.Logf("%#v\n", user)
 }
 
 func TestClient_ListOwnUserRepositories(t *testing.T) {
@@ -31,7 +30,7 @@ func TestClient_ListOwnUserRepositories(t *testing.T) {
 	}
 
 	for _, repo := range repos {
-		fmt.Printf("%#v\n", repo)
+		t.Logf("%#v\n", repo)
 	}
 }
 
@@ -41,7 +40,7 @@ func TestClient_DeleteRepository(t *testing.T) {
 	if bds, err := c.DeleteRepository("jdxj/xkcfoq"); err != nil {
 		t.Fatalf("delete repository faild: %s\n", err)
 	} else {
-		fmt.Printf("%#v\n", bds)
+		t.Logf("%#v\n", bds)
 	}
 }
 
@@ -54,7 +53,7 @@ func TestClient_ListGroupRepositories(t *testing.T) {
 	}
 
 	for _, repo := range repos {
-		fmt.Printf("%#v\n", repo)
+		t.Logf("%#v\n", repo)
 	}
 }
 
@@ -67,7 +66,7 @@ func TestClient_ListDoc(t *testing.T) {
 	}
 
 	for _, doc := range docs {
-		fmt.Printf("%#v\n", doc.LastEditor)
+		t.Logf("%#v\n", doc.LastEditor)
 	}
 }
 
@@ -91,7 +90,7 @@ func TestJsonType(t *testing.T) {
 		t.Fatalf("%s\n", err)
 	}
 
-	fmt.Printf("%s", data)
+	t.Logf("%s", data)
 }
 
 func TestClient_CreateGroupRepository(t *testing.T) {
@@ -103,7 +102,7 @@ func TestClient_CreateGroupRepository(t *testing.T) {
 		t.Fatalf("%s\n", err)
 	}
 
-	fmt.Printf("%#v\n", bds)
+	t.Logf("%#v\n", bds)
 }
 
 func TestClient_CreateDoc(t *testing.T) {
@@ -115,7 +114,7 @@ func TestClient_CreateDoc(t *testing.T) {
 		t.Fatalf("%s", err)
 	}
 
-	fmt.Printf("%#v\n", dds)
+	t.Logf("%#v\n", dds)
 }
 
 func TestClient_CreateDocAmount(t *testing.T) {
@@ -139,15 +138,9 @@ func TestClient_CreateRepoDoc(t *testing.T) {
 func TestClient_Users(t *testing.T) {
 	c := newClient()
 
-	user, err := c.Users("jdxj")
+	user, err := c.Users("yubo555")
 	if err != nil {
 		t.Fatalf("%s\n", err)
 	}
-	fmt.Printf("use name: %#v\n", user)
-
-	user, err = c.Users("663581")
-	if err != nil {
-		t.Fatalf("%s\n", err)
-	}
-	fmt.Printf("use id: %#v\n", user)
+	t.Logf("use name: %#v\n", user)
 }
