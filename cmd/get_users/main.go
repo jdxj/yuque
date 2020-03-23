@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	logs.SetLogger(logs.AdapterFile, `{"filename":"yuque.log","level":7,"maxlines":0,"maxsize":0,"daily":true,"maxdays":10,"color":true}`)
+	logs.SetLogger(logs.AdapterFile, `{"filename":"yuque_get_users.log","level":7,"maxlines":0,"maxsize":0,"daily":true,"maxdays":10,"color":true}`)
 }
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 		return
 	}
 
-	c.Users(213163)
+	c.Users(390562)
 	c.Remaining()
 	logs.Debug("start counter")
 
