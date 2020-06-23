@@ -2,16 +2,17 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 )
 
-//func newClient() *Client {
-//	c, err := NewClientToken("your token")
-//	if err != nil {
-//		panic(fmt.Sprintf("Create client fail: %s\n", err))
-//	}
-//	return c
-//}
+func newClient() *Client {
+	c, err := NewClientToken("")
+	if err != nil {
+		panic(fmt.Sprintf("Create client fail: %s\n", err))
+	}
+	return c
+}
 
 func TestClient_User(t *testing.T) {
 	c := newClient()
