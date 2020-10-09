@@ -4,98 +4,176 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 
-	"github.com/jdxj/yuque/modules"
+	"github.com/jdxj/yuque/models"
 )
 
-func (c *Client) CreateUserRepository(repoReq *CreateRepositoryRequest) (*modules.BookDetailSerializer, error) {
-	if c.user == nil {
-		if _, err := c.User(); err != nil {
-			return nil, err
-		}
-	}
-
-	path := fmt.Sprintf(APIPath+APIUserRepos, c.user.Login)
-	return c.createRepository(path, repoReq)
+type CreateRepoParams struct {
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Description string `json:"description"`
+	Public      int    `json:"public"`
+	Type        string `json:"type"`
 }
 
-func (c *Client) CreateGroupRepository(group string, repoReq *CreateRepositoryRequest) (*modules.BookDetailSerializer, error) {
-	path := fmt.Sprintf(APIPath+APIGroupsRepos, group)
-	return c.createRepository(path, repoReq)
+func (crp *CreateRepoParams) Reader() io.Reader {
+	data, _ := json.Marshal(crp)
+	return bytes.NewReader(data)
 }
 
-func (c *Client) createRepository(path string, repoReq *CreateRepositoryRequest) (*modules.BookDetailSerializer, error) {
-	data, err := json.Marshal(repoReq)
+// CreateUserRepository 往自己下面创建知识库
+func (c *Client) CreateUserRepository(id string, crp *CreateRepoParams) (*models.BookDetailSerializer, error) {
+	path := fmt.Sprintf(APIUsersRepos, id)
+	return c.createRepository(path, crp)
+}
+
+// CreateGroupRepository 往团队创建知识库
+func (c *Client) CreateGroupRepository(id string, crp *CreateRepoParams) (*models.BookDetailSerializer, error) {
+	path := fmt.Sprintf(APIGroupsRepos, id)
+	return c.createRepository(path, crp)
+}
+
+func (c *Client) createRepository(path string, crp *CreateRepoParams) (*models.BookDetailSerializer, error) {
+	req := c.newReqPost(path, crp.Reader())
+	data, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newHTTPRequest(http.MethodPost, path, bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	reader, err := c.do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	rr := &RepositoryCreated{}
-	decoder := json.NewDecoder(reader)
-	return rr.Data, decoder.Decode(rr)
+	bds := new(models.BookDetailSerializer)
+	return bds, json.Unmarshal(data, bds)
 }
 
-func (c *Client) DeleteRepository(namespace string) (*modules.BookDetailSerializer, error) {
-	path := fmt.Sprintf(APIPath+APIRepos, namespace)
-	req, err := c.newHTTPRequest(http.MethodDelete, path, nil)
+// DeleteRepository 删除知识库
+func (c *Client) DeleteRepository(id string) (*models.BookDetailSerializer, error) {
+	path := fmt.Sprintf(APIRepos, id)
+	req := c.newReqDelete(path)
+	data, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	reader, err := c.do(req)
-	if err != nil {
-		return nil, err
+	bds := new(models.BookDetailSerializer)
+	return bds, json.Unmarshal(data, bds)
+}
+
+type ListReposParams struct {
+	Type   string `json:"type"`
+	Offset int    `json:"offset"`
+}
+
+func (lrp *ListReposParams) String() string {
+	values := url.Values{}
+	if lrp.Type != "" {
+		values.Set("type", lrp.Type)
+	}
+	if lrp.Offset != 0 {
+		values.Set("offset", strconv.Itoa(lrp.Offset))
+	}
+	return values.Encode()
+}
+
+// ListUserRepositories 获取某个用户的知识库列表
+func (c *Client) ListUserRepositories(id string, lrp *ListReposParams) ([]*models.BookSerializer, error) {
+	path := fmt.Sprintf(APIUsersRepos, id)
+	return c.listRepositories(path, lrp)
+}
+
+// ListGroupRepositories 获取某个团队的知识库列表
+func (c *Client) ListGroupRepositories(id string, lrp *ListReposParams) ([]*models.BookSerializer, error) {
+	path := fmt.Sprintf(APIGroupsRepos, id)
+	return c.listRepositories(path, lrp)
+}
+
+func (c *Client) listRepositories(path string, lrp *ListReposParams) ([]*models.BookSerializer, error) {
+	paramsKV := lrp.String()
+	if len(paramsKV) != 0 {
+		path = fmt.Sprintf("%s?%s", path, paramsKV)
 	}
 
-	dur := &RepositoryDeleted{}
-	decoder := json.NewDecoder(reader)
-	return dur.Data, decoder.Decode(dur)
-}
-
-func (c *Client) ListOwnUserRepositories() ([]*modules.BookSerializer, error) {
-	if c.user == nil {
-		if _, err := c.User(); err != nil {
-			return nil, err
-		}
-	}
-
-	return c.ListUserRepositories(c.user.Login)
-}
-
-func (c *Client) ListUserRepositories(login string) ([]*modules.BookSerializer, error) {
-	path := fmt.Sprintf(APIPath+APIUserRepos, login)
-	return c.listRepositories(path)
-}
-
-func (c *Client) ListGroupRepositories(group string) ([]*modules.BookSerializer, error) {
-	path := fmt.Sprintf(APIPath+APIGroupsRepos, group)
-	return c.listRepositories(path)
-}
-
-func (c *Client) listRepositories(path string) ([]*modules.BookSerializer, error) {
 	req, err := c.newHTTPRequest(http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	reader, err := c.do(req)
+	data, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	reposList := &RepositoriesListed{}
-	decoder := json.NewDecoder(reader)
-	return reposList.Data, decoder.Decode(reposList)
+	var repos []*models.BookSerializer
+	return repos, json.Unmarshal(data, &repos)
+}
+
+type GetRepoDetailParams struct {
+	Type string `json:"type"`
+}
+
+func (grd *GetRepoDetailParams) String() string {
+	values := url.Values{}
+	if grd.Type != "" {
+		values.Set("type", grd.Type)
+	}
+	return values.Encode()
+}
+
+// GetRepositoryDetail 获取知识库详情
+func (c *Client) GetRepositoryDetail(id string, grd *GetRepoDetailParams) (*models.BookDetailSerializer, error) {
+	path := fmt.Sprintf(APIRepos, id)
+	paramsKV := grd.String()
+	if len(paramsKV) != 0 {
+		path = fmt.Sprintf("%s?%s", path, paramsKV)
+	}
+
+	req := c.newReqGet(path)
+	data, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	bds := new(models.BookDetailSerializer)
+	return bds, json.Unmarshal(data, bds)
+}
+
+type UpdateRepoParams struct {
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Toc         string `json:"toc"`
+	Description string `json:"description"`
+	Public      int    `json:"public"`
+}
+
+func (urp *UpdateRepoParams) Reader() io.Reader {
+	data, _ := json.Marshal(urp)
+	return bytes.NewReader(data)
+}
+
+// UpdateRepository 更新知识库信息
+func (c *Client) UpdateRepository(id string, urp *UpdateRepoParams) (*models.BookDetailSerializer, error) {
+	path := fmt.Sprintf(APIRepos, id)
+	req := c.newReqPut(path, urp.Reader())
+	data, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	bds := new(models.BookDetailSerializer)
+	return bds, json.Unmarshal(data, bds)
+}
+
+// GetRepositoryToc 获取一个知识库的目录结构
+func (c *Client) GetRepositoryToc(id string) ([]*models.Toc, error) {
+	path := fmt.Sprintf(APIReposToc, id)
+	req := c.newReqGet(path)
+	data, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var tocs []*models.Toc
+	return tocs, json.Unmarshal(data, &tocs)
 }
