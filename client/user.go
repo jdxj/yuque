@@ -5,53 +5,37 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jdxj/yuque/modules"
+	"github.com/jdxj/yuque/models"
 )
 
-func (c *Client) User() (*modules.UserSerializer, error) {
-	if c.user != nil {
-		return c.user, nil
-	}
-
-	path := fmt.Sprintf("%s%s", APIPath, APIUser)
-	req, err := c.newHTTPRequest(http.MethodGet, path, nil)
+// AuthenticatedUser 获取认证的用户的个人信息
+func (c *Client) AuthenticatedUser() (*models.UserSerializer, error) {
+	req, err := c.newHTTPRequest(http.MethodGet, APIUser, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	reader, err := c.do(req)
+	data, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
-
-	ur := &UserResponse{}
-	decoder := json.NewDecoder(reader)
-	if err := decoder.Decode(ur); err != nil {
-		return nil, err
-	}
-
-	c.user = ur.Data
-	return ur.Data, nil
+	us := new(models.UserSerializer)
+	return us, json.Unmarshal(data, us)
 }
 
-func (c *Client) Users(login string) (*modules.UserSerializer, error) {
-	path := fmt.Sprintf(APIPath+APIUsers, login)
+// IndividualUser 获取单个用户信息
+// id: 1: 用户编号 (数字), 2: 用户个人路径 (字符串)
+func (c *Client) IndividualUser(id string) (*models.UserSerializer, error) {
+	path := fmt.Sprintf(APIUsers, id)
 	req, err := c.newHTTPRequest(http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	reader, err := c.do(req)
+	data, err := c.do(req)
 	if err != nil {
 		return nil, err
 	}
-
-	ur := &UserResponse{}
-	decoder := json.NewDecoder(reader)
-	if err := decoder.Decode(ur); err != nil {
-		return nil, err
-	}
-
-	c.user = ur.Data
-	return ur.Data, nil
+	us := new(models.UserSerializer)
+	return us, json.Unmarshal(data, us)
 }

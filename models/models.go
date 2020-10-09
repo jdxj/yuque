@@ -1,4 +1,4 @@
-package modules
+package models
 
 type Doc struct {
 	Create bool `json:"create"`
