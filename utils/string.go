@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"time"
 	"unsafe"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 // 来源: https://www.flysnow.org/2019/09/30/how-to-generate-a-random-string-of-a-fixed-length-in-go.html
@@ -36,4 +38,8 @@ func GenRandString(n int) string {
 	}
 
 	return *(*string)(unsafe.Pointer(&b))
+}
+
+func UUID() string {
+	return uuid.NewV4().String()
 }
