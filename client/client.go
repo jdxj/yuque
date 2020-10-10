@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"net/http/cookiejar"
 	"strconv"
@@ -41,8 +42,10 @@ func New(token string) *Client {
 	}
 
 	c := &Client{
-		token:      token,
-		httpClient: hc,
+		token:               token,
+		httpClient:          hc,
+		xRateLimitLimit:     math.MaxInt32,
+		xRateLimitRemaining: math.MaxInt32,
 	}
 	return c
 }
@@ -89,6 +92,11 @@ func (c *Client) newReqDelete(path string) *http.Request {
 }
 
 func (c *Client) do(req *http.Request) (json.RawMessage, error) {
+	err := c.checkLimit()
+	if err != nil {
+		return nil, err
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -130,4 +138,12 @@ func (c *Client) updateLimit(resp *http.Response) {
 
 	atomic.StoreInt32(&c.xRateLimitLimit, int32(limit))
 	atomic.StoreInt32(&c.xRateLimitRemaining, int32(remaining))
+}
+
+func (c *Client) checkLimit() error {
+	if c.XRateLimitRemaining() <= 0 {
+		return fmt.Errorf("X-RateLimit-Limit: %d, X-RateLimit-Remaining: %d",
+			c.XRateLimitLimit(), c.XRateLimitRemaining())
+	}
+	return nil
 }
