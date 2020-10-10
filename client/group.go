@@ -1,10 +1,8 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 )
 
 // ListUserJoinedGroup 获取某个用户的加入的组织列表
@@ -32,17 +30,6 @@ func (c *Client) ListPublicGroups() ([]*UserSerializer, error) {
 	return *uss, json.Unmarshal(data, uss)
 }
 
-type CreateGroupParams struct {
-	Name        string `json:"name"`
-	Login       string `json:"login"` // 用户个人路径
-	Description string `json:"description"`
-}
-
-func (cgp *CreateGroupParams) Reader() io.Reader {
-	data, _ := json.Marshal(cgp)
-	return bytes.NewReader(data)
-}
-
 // CreateGroup 创建 Group
 func (c *Client) CreateGroup(cgp *CreateGroupParams) (*UserSerializer, error) {
 	req := c.newReqPost(APIGroups, cgp.Reader())
@@ -66,17 +53,6 @@ func (c *Client) GetGroupDetail(id string) (*UserSerializer, error) {
 
 	us := new(UserSerializer)
 	return us, json.Unmarshal(data, us)
-}
-
-type UpdateGroupDetailParams struct {
-	Name        string `json:"name"`
-	Login       string `json:"login"`
-	Description string `json:"description"`
-}
-
-func (ugd *UpdateGroupDetailParams) Reader() io.Reader {
-	data, _ := json.Marshal(ugd)
-	return bytes.NewReader(data)
 }
 
 // UpdateGroupDetail 更新单个组织的详细信息
@@ -116,15 +92,6 @@ func (c *Client) ListGroupUsers(id string) ([]*GroupUserSerializer, error) {
 
 	var guss []*GroupUserSerializer
 	return guss, json.Unmarshal(data, &guss)
-}
-
-type UpdateGroupUsersParams struct {
-	Role int `json:"role"` // 0: 管理员, 1: 普通成员
-}
-
-func (ugu *UpdateGroupUsersParams) Reader() io.Reader {
-	data, _ := json.Marshal(ugu)
-	return bytes.NewReader(data)
 }
 
 // UpdateGroupUsers 增加或更新组织成员

@@ -1,27 +1,10 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
-	"strconv"
 )
-
-type CreateRepoParams struct {
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	Description string `json:"description"`
-	Public      int    `json:"public"`
-	Type        string `json:"type"`
-}
-
-func (crp *CreateRepoParams) Reader() io.Reader {
-	data, _ := json.Marshal(crp)
-	return bytes.NewReader(data)
-}
 
 // CreateUserRepository 往自己下面创建知识库
 func (c *Client) CreateUserRepository(id string, crp *CreateRepoParams) (*BookDetailSerializer, error) {
@@ -59,22 +42,6 @@ func (c *Client) DeleteRepository(id string) (*BookDetailSerializer, error) {
 	return bds, json.Unmarshal(data, bds)
 }
 
-type ListReposParams struct {
-	Type   string `json:"type"`
-	Offset int    `json:"offset"`
-}
-
-func (lrp *ListReposParams) String() string {
-	values := url.Values{}
-	if lrp.Type != "" {
-		values.Set("type", lrp.Type)
-	}
-	if lrp.Offset != 0 {
-		values.Set("offset", strconv.Itoa(lrp.Offset))
-	}
-	return values.Encode()
-}
-
 // ListUserRepositories 获取某个用户的知识库列表
 func (c *Client) ListUserRepositories(id string, lrp *ListReposParams) ([]*BookSerializer, error) {
 	path := fmt.Sprintf(APIUsersRepos, id)
@@ -107,18 +74,6 @@ func (c *Client) listRepositories(path string, lrp *ListReposParams) ([]*BookSer
 	return repos, json.Unmarshal(data, &repos)
 }
 
-type GetRepoDetailParams struct {
-	Type string `json:"type"`
-}
-
-func (grd *GetRepoDetailParams) String() string {
-	values := url.Values{}
-	if grd.Type != "" {
-		values.Set("type", grd.Type)
-	}
-	return values.Encode()
-}
-
 // GetRepositoryDetail 获取知识库详情
 func (c *Client) GetRepositoryDetail(id string, grd *GetRepoDetailParams) (*BookDetailSerializer, error) {
 	path := fmt.Sprintf(APIRepos, id)
@@ -135,19 +90,6 @@ func (c *Client) GetRepositoryDetail(id string, grd *GetRepoDetailParams) (*Book
 
 	bds := new(BookDetailSerializer)
 	return bds, json.Unmarshal(data, bds)
-}
-
-type UpdateRepoParams struct {
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	Toc         string `json:"toc"`
-	Description string `json:"description"`
-	Public      int    `json:"public"`
-}
-
-func (urp *UpdateRepoParams) Reader() io.Reader {
-	data, _ := json.Marshal(urp)
-	return bytes.NewReader(data)
 }
 
 // UpdateRepository 更新知识库信息

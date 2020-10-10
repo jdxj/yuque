@@ -1,11 +1,8 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/url"
 	"strconv"
 )
 
@@ -20,18 +17,6 @@ func (c *Client) ListRepositoryDocs(id string) ([]*DocSerializer, error) {
 
 	var dss []*DocSerializer
 	return dss, json.Unmarshal(data, &dss)
-}
-
-type GetRepoDocDetailParams struct {
-	Raw int `json:"raw"`
-}
-
-func (grd *GetRepoDocDetailParams) String() string {
-	values := url.Values{}
-	if grd.Raw != 0 {
-		values.Set("raw", strconv.Itoa(grd.Raw))
-	}
-	return values.Encode()
 }
 
 // GetRepositoryDocDetail 获取单篇文档的详细信息
@@ -51,19 +36,6 @@ func (c *Client) GetRepositoryDocDetail(id, slug string, grd *GetRepoDocDetailPa
 	return dds, json.Unmarshal(data, dds)
 }
 
-type CreateRepoDocParams struct {
-	Title  string `json:"title"`
-	Slug   string `json:"slug"`
-	Public int    `json:"public"`
-	Format string `json:"format"`
-	Body   string `json:"body"`
-}
-
-func (crd *CreateRepoDocParams) Reader() io.Reader {
-	data, _ := json.Marshal(crd)
-	return bytes.NewReader(data)
-}
-
 // CreateRepositoryDoc 创建文档
 func (c *Client) CreateRepositoryDoc(id string, crd *CreateRepoDocParams) (*DocDetailSerializer, error) {
 	path := fmt.Sprintf(APIReposDocs, id)
@@ -75,18 +47,6 @@ func (c *Client) CreateRepositoryDoc(id string, crd *CreateRepoDocParams) (*DocD
 
 	dds := new(DocDetailSerializer)
 	return dds, json.Unmarshal(data, dds)
-}
-
-type UpdateRepoDocParams struct {
-	Title  string `json:"title"`
-	Slug   string `json:"slug"`
-	Public int    `json:"public"`
-	Body   string `json:"body"`
-}
-
-func (urd *UpdateRepoDocParams) Reader() io.Reader {
-	data, _ := json.Marshal(urd)
-	return bytes.NewReader(data)
 }
 
 // UpdateRepositoryDoc 更新文档
