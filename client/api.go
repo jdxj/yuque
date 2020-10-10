@@ -2,6 +2,7 @@ package client
 
 import "errors"
 
+// API 路径
 const (
 	APIDomain = "https://www.yuque.com/api/v2"
 
@@ -19,14 +20,41 @@ const (
 	APIReposDocs       = APIDomain + "/repos/%s/docs"
 	APIReposDocsDetail = APIDomain + "/repos/%s/docs/%s"
 
-	APIUsersGroups  = APIDomain + "/users/%s/groups"
-	APIPublicGroups = APIDomain + "/groups"
-
-	DefaultUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"
+	// group
+	APIUsersGroups       = APIDomain + "/users/%s/groups"
+	APIGroups            = APIDomain + "/groups"
+	APIGroupsDetail      = APIDomain + "/groups/%s"
+	APIGroupsUsers       = APIDomain + "/groups/%s/users"
+	APIGroupsUsersUpdate = APIDomain + "/groups/%s/users/%s"
 
 	SlugLength = 6
 
 	RepositoryNamePrefix = "AutoCreate"
+)
+
+// DefaultUserAgent 默认的 user agent
+const DefaultUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"
+
+// 知识库类型
+const (
+	Book   = "Book"
+	Design = "Design"
+	All    = "All"
+)
+
+// 知识库访问权限
+const (
+	Private          = iota // 私密
+	Open                    // 所有人
+	SpaceMember             // 空间成员
+	SpaceOpen               // 空间所有人
+	RepositoryMember        // 知识库成员
+)
+
+// 文档格式
+const (
+	Markdown = "markdown"
+	Lake     = "lake"
 )
 
 var (
@@ -40,23 +68,4 @@ var (
 		404: errors.New("数据不存在，或未开放"),
 		500: errors.New("服务器异常"),
 	}
-)
-
-const (
-	Book   = "Book"
-	Design = "Design"
-	All    = "All"
-)
-
-const (
-	Private          = iota // 私密
-	Open                    // 所有人
-	SpaceMember             // 空间成员
-	SpaceOpen               // 空间所有人
-	RepositoryMember        // 知识库成员
-)
-
-const (
-	Markdown = "markdown"
-	Lake     = "lake"
 )
