@@ -2,81 +2,57 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/jdxj/yuque/modules"
+	"net/http/cookiejar"
+	"strconv"
+	"sync"
+	"sync/atomic"
+	"time"
 )
 
-var ErrNoFound = fmt.Errorf("http resp err: not found")
+var (
+	ErrNoFound      = errors.New("http resp err: not found")
+	ErrInvalidToken = errors.New("invalid token")
+)
 
 const (
-	APIPath        = "https://www.yuque.com/api/v2"
-	APIUsers       = "/users/%s"
-	APIUser        = "/user"
-	APIUserRepos   = "/users/%s/repos"
-	APIGroupsRepos = "/groups/%s/repos"
-	APIRepos       = "/repos/%s"
-	APIDocs        = "/repos/%s/docs"
-
-	UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36"
-
-	SlugLength = 6
-
-	RepositoryNamePrefix = "AutoCreate"
+	bufLimit = 8 * 1 << 10 // 8KB
 )
 
-type Typ string
-
-const (
-	Book   Typ = "Book"
-	Design     = "Design"
-	All        = "All"
+var (
+	pool = sync.Pool{
+		New: func() interface{} {
+			buf := make([]byte, bufLimit)
+			return bytes.NewBuffer(buf)
+		},
+	}
 )
 
-type Public int
-
-const (
-	Private Public = iota
-	Open
-	SpaceMember
-	SpaceOpen
-	RepositoryMember
-)
-
-type Format string
-
-const (
-	Markdown Format = "markdown"
-	Lake            = "lake"
-)
-
-func NewClientToken(token string) (*Client, error) {
-	if token == "" {
-		return nil, fmt.Errorf("token can not be empty")
+func New(token string) *Client {
+	jar, _ := cookiejar.New(nil)
+	hc := &http.Client{
+		Jar:     jar,
+		Timeout: 10 * time.Second,
 	}
 
 	c := &Client{
-		httpClient:    &http.Client{},
-		token:         token,
-		namespaceTask: make(chan string),
+		token:      token,
+		httpClient: hc,
 	}
-	return c, nil
+	return c
 }
 
 type Client struct {
-	httpClient *http.Client
 	token      string
-	user       *modules.UserSerializer
+	httpClient *http.Client
 
-	// status
-	// todo: 是否考虑并发?
-	xRateLimitRemaining string
-
-	// play
-	namespaceTask chan string
+	xRateLimitLimit     int32
+	xRateLimitRemaining int32
 }
 
 func (c *Client) newHTTPRequest(method, path string, body io.Reader) (*http.Request, error) {
@@ -85,34 +61,73 @@ func (c *Client) newHTTPRequest(method, path string, body io.Reader) (*http.Requ
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", UserAgent)
+	req.Header.Set("User-Agent", DefaultUserAgent)
 	req.Header.Set("X-Auth-Token", c.token)
 	return req, nil
 }
 
-func (c *Client) do(req *http.Request) (io.Reader, error) {
+func (c *Client) newReqGet(path string) *http.Request {
+	req, _ := c.newHTTPRequest(http.MethodGet, path, nil)
+	return req
+}
+
+func (c *Client) newReqPost(path string, body io.Reader) *http.Request {
+	req, _ := c.newHTTPRequest(http.MethodPost, path, body)
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+func (c *Client) newReqPut(path string, body io.Reader) *http.Request {
+	req, _ := c.newHTTPRequest(http.MethodPut, path, body)
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+func (c *Client) newReqDelete(path string) *http.Request {
+	req, _ := c.newHTTPRequest(http.MethodDelete, path, nil)
+	return req
+}
+
+func (c *Client) do(req *http.Request) (json.RawMessage, error) {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	c.xRateLimitRemaining = resp.Header.Get("X-RateLimit-Remaining")
+	c.updateLimit(resp)
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
-		if resp.StatusCode == 404 {
-			return nil, ErrNoFound
-		}
-		return nil, fmt.Errorf("%s", data)
+	fmt.Printf("low-level data: %s\n", data)
+
+	if resp.StatusCode == 200 {
+		mResp := new(Response)
+		return mResp.Data, json.Unmarshal(data, mResp)
 	}
-	return bytes.NewBuffer(data), nil
+
+	err, ok := ErrMsg[resp.StatusCode]
+	if ok {
+		return nil, err
+	}
+	return nil, fmt.Errorf("%s: %d", ErrCodeNotDefine, resp.StatusCode)
 }
 
-func (c *Client) XRateLimitRemaining() string {
-	return c.xRateLimitRemaining
+func (c *Client) XRateLimitLimit() int {
+	return int(atomic.LoadInt32(&c.xRateLimitLimit))
+}
+
+func (c *Client) XRateLimitRemaining() int {
+	return int(atomic.LoadInt32(&c.xRateLimitRemaining))
+}
+
+func (c *Client) updateLimit(resp *http.Response) {
+	limit, _ := strconv.Atoi(resp.Header.Get("X-RateLimit-Limit"))
+	remaining, _ := strconv.Atoi(resp.Header.Get("X-RateLimit-Remaining"))
+
+	atomic.StoreInt32(&c.xRateLimitLimit, int32(limit))
+	atomic.StoreInt32(&c.xRateLimitRemaining, int32(remaining))
 }

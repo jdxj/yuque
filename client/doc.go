@@ -7,12 +7,10 @@ import (
 	"io"
 	"net/url"
 	"strconv"
-
-	"github.com/jdxj/yuque/models"
 )
 
 // ListRepositoryDocs 获取一个仓库的文档列表
-func (c *Client) ListRepositoryDocs(id string) ([]*models.DocSerializer, error) {
+func (c *Client) ListRepositoryDocs(id string) ([]*DocSerializer, error) {
 	path := fmt.Sprintf(APIReposDocs, id)
 	req := c.newReqGet(path)
 	data, err := c.do(req)
@@ -20,7 +18,7 @@ func (c *Client) ListRepositoryDocs(id string) ([]*models.DocSerializer, error) 
 		return nil, err
 	}
 
-	var dss []*models.DocSerializer
+	var dss []*DocSerializer
 	return dss, json.Unmarshal(data, &dss)
 }
 
@@ -37,7 +35,7 @@ func (grd *GetRepoDocDetailParams) String() string {
 }
 
 // GetRepositoryDocDetail 获取单篇文档的详细信息
-func (c *Client) GetRepositoryDocDetail(id, slug string, grd *GetRepoDocDetailParams) (*models.DocDetailSerializer, error) {
+func (c *Client) GetRepositoryDocDetail(id, slug string, grd *GetRepoDocDetailParams) (*DocDetailSerializer, error) {
 	path := fmt.Sprintf(APIReposDocsDetail, id, slug)
 	paramsKV := grd.String()
 	if len(paramsKV) != 0 {
@@ -49,7 +47,7 @@ func (c *Client) GetRepositoryDocDetail(id, slug string, grd *GetRepoDocDetailPa
 		return nil, err
 	}
 
-	dds := new(models.DocDetailSerializer)
+	dds := new(DocDetailSerializer)
 	return dds, json.Unmarshal(data, dds)
 }
 
@@ -67,7 +65,7 @@ func (crd *CreateRepoDocParams) Reader() io.Reader {
 }
 
 // CreateRepositoryDoc 创建文档
-func (c *Client) CreateRepositoryDoc(id string, crd *CreateRepoDocParams) (*models.DocDetailSerializer, error) {
+func (c *Client) CreateRepositoryDoc(id string, crd *CreateRepoDocParams) (*DocDetailSerializer, error) {
 	path := fmt.Sprintf(APIReposDocs, id)
 	req := c.newReqPost(path, crd.Reader())
 	data, err := c.do(req)
@@ -75,7 +73,7 @@ func (c *Client) CreateRepositoryDoc(id string, crd *CreateRepoDocParams) (*mode
 		return nil, err
 	}
 
-	dds := new(models.DocDetailSerializer)
+	dds := new(DocDetailSerializer)
 	return dds, json.Unmarshal(data, dds)
 }
 
@@ -92,7 +90,7 @@ func (urd *UpdateRepoDocParams) Reader() io.Reader {
 }
 
 // UpdateRepositoryDoc 更新文档
-func (c *Client) UpdateRepositoryDoc(namespace string, docID int, urd *UpdateRepoDocParams) (*models.DocDetailSerializer, error) {
+func (c *Client) UpdateRepositoryDoc(namespace string, docID int, urd *UpdateRepoDocParams) (*DocDetailSerializer, error) {
 	path := fmt.Sprintf(APIReposDocsDetail, namespace, strconv.Itoa(docID))
 	req := c.newReqPut(path, urd.Reader())
 	data, err := c.do(req)
@@ -100,12 +98,12 @@ func (c *Client) UpdateRepositoryDoc(namespace string, docID int, urd *UpdateRep
 		return nil, err
 	}
 
-	dds := new(models.DocDetailSerializer)
+	dds := new(DocDetailSerializer)
 	return dds, json.Unmarshal(data, dds)
 }
 
 // DeleteRepositoryDoc 删除文档
-func (c *Client) DeleteRepositoryDoc(namespace string, docID int) (*models.DocDetailSerializer, error) {
+func (c *Client) DeleteRepositoryDoc(namespace string, docID int) (*DocDetailSerializer, error) {
 	path := fmt.Sprintf(APIReposDocsDetail, namespace, strconv.Itoa(docID))
 	req := c.newReqDelete(path)
 	data, err := c.do(req)
@@ -113,6 +111,6 @@ func (c *Client) DeleteRepositoryDoc(namespace string, docID int) (*models.DocDe
 		return nil, err
 	}
 
-	dds := new(models.DocDetailSerializer)
+	dds := new(DocDetailSerializer)
 	return dds, json.Unmarshal(data, dds)
 }

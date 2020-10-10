@@ -19,3 +19,5 @@ res_test.go
 res.go
 *.log
 db_test.go
+
+*.yaml
