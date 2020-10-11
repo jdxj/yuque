@@ -5,6 +5,7 @@ import "errors"
 // API 路径
 const (
 	APIDomain = "https://www.yuque.com/api/v2"
+	APIHello  = APIDomain + "/hello"
 
 	// user
 	APIUsers = APIDomain + "/users/%s"

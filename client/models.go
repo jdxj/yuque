@@ -3,12 +3,18 @@ package client
 import (
 	"encoding/json"
 	"strconv"
+
+	"github.com/jdxj/yuque/utils"
 )
 
 type Response struct {
 	Abilities Abilities       `json:"abilities"`
 	Meta      Meta            `json:"meta"`
 	Data      json.RawMessage `json:"data"`
+}
+
+type Hello struct {
+	Message string `json:"message"`
 }
 
 type Abilities struct {
@@ -53,6 +59,10 @@ type UserSerializer struct {
 	Serializer        string `json:"_serializer"`
 }
 
+func (us *UserSerializer) String() string {
+	return utils.MarshalToString(us)
+}
+
 type BookSerializer struct {
 	ID               int            `json:"id"`
 	Type             string         `json:"type"`
@@ -81,6 +91,10 @@ type BookDetailSerializer struct {
 	ArchivedAt string `json:"archived_at"`
 
 	Abilities Abilities `json:"abilities"`
+}
+
+func (bds *BookDetailSerializer) String() string {
+	return utils.MarshalToString(bds)
 }
 
 type DocSerializer struct {

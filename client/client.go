@@ -110,6 +110,7 @@ func (c *Client) do(req *http.Request) (json.RawMessage, error) {
 		return nil, err
 	}
 
+	// debug
 	fmt.Printf("low-level data: %s\n", data)
 
 	if resp.StatusCode == 200 {
@@ -146,4 +147,16 @@ func (c *Client) checkLimit() error {
 			c.XRateLimitLimit(), c.XRateLimitRemaining())
 	}
 	return nil
+}
+
+// Hello 用于测试 token 是否有效
+func (c *Client) Hello() (*Hello, error) {
+	req := c.newReqGet(APIHello)
+	data, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	h := new(Hello)
+	return h, json.Unmarshal(data, h)
 }

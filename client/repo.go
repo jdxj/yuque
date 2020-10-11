@@ -13,6 +13,7 @@ func (c *Client) CreateUserRepository(id string, crp *CreateRepoParams) (*BookDe
 }
 
 // CreateGroupRepository 往团队创建知识库
+// notes: 未测试
 func (c *Client) CreateGroupRepository(id string, crp *CreateRepoParams) (*BookDetailSerializer, error) {
 	path := fmt.Sprintf(APIGroupsRepos, id)
 	return c.createRepository(path, crp)
