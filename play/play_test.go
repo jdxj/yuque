@@ -41,7 +41,7 @@ func TestCounter_InsertBook(t *testing.T) {
 	}
 	defer c.Stop()
 
-	book := &modules.BookSerializer{
+	book := &models.BookSerializer{
 		ID:           1,
 		Type:         "test_type",
 		Slug:         "test_slug",

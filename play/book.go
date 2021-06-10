@@ -48,7 +48,7 @@ func (c *Counter) Books() {
 	}
 }
 
-func (c *Counter) InsertBook(userID int, book *modules.BookSerializer) error {
+func (c *Counter) InsertBook(userID int, book *models.BookSerializer) error {
 	_, err := c.ds.Exec(`INSERT INTO book (user_id,book_id,book_slug,book_name,book_type,likes_count,watches_count)
 			VALUES (?,?,?,?,?,?,?)`,
 		userID, book.ID, book.Slug, book.Name, book.Type, book.LikesCount, book.WatchesCount)

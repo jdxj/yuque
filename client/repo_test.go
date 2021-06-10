@@ -3,8 +3,11 @@ package client
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/jdxj/yuque/utils"
 )
 
 func TestClient_ListUserRepositories(t *testing.T) {
@@ -85,20 +88,39 @@ func TestURLValues(t *testing.T) {
 
 func TestClient_CreateUserRepository(t *testing.T) {
 	c := newClient()
+	maxI, maxJ := 50, 50
 
-	crp := &CreateRepoParams{
-		Name:        "abc2",
-		Slug:        "ii8a22",
-		Description: "test",
-		Public:      0,
-		Type:        Book,
-	}
-	bds, err := c.CreateUserRepository("jdxj", crp)
-	if err != nil {
-		t.Fatalf("%s\n", err)
+	for i := 0; i < maxI; i++ {
+		crp := &CreateRepoParams{
+			Name:        "autoCreate",
+			Slug:        utils.GenRandString(8),
+			Description: "test",
+			Public:      0,
+			Type:        Book,
+		}
+
+		bds, err := c.CreateUserRepository("jdxj", crp)
+		if err != nil {
+			t.Fatalf("%s\n", err)
+		}
+		fmt.Printf("%#v\n", bds)
+
+		for j := 0; j < maxJ; j++ {
+			crd := &CreateRepoDocParams{
+				Title:  "abc",
+				Slug:   utils.GenRandString(8),
+				Public: 1,
+				Format: Markdown,
+				Body:   "- abc",
+			}
+			dds, err := c.CreateRepositoryDoc(strconv.Itoa(bds.ID), crd)
+			if err != nil {
+				t.Fatalf("CreateRepositoryDoc: %s\n", err)
+			}
+			fmt.Printf("%#v\n", dds)
+		}
 	}
 
-	fmt.Printf("%#v\n", bds)
 }
 
 func TestClient_GetRepositoryDetail(t *testing.T) {

@@ -84,7 +84,7 @@ func (c *Counter) Users(start uint64) {
 	}()
 }
 
-func (c *Counter) InsertUser(user *modules.UserSerializer) error {
+func (c *Counter) InsertUser(user *models.UserSerializer) error {
 	ds := c.ds
 
 	_, err := ds.Exec("INSERT INTO user (id,type,login,name,followers_count) VALUES (?,?,?,?,?)",
