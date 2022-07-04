@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/astaxie/beego/logs"
-	"github.com/jdxj/yuque/modules"
 )
 
 func (c *Counter) followerExceed10() ([]int, error) {

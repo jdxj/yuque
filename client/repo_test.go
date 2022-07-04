@@ -88,7 +88,7 @@ func TestURLValues(t *testing.T) {
 
 func TestClient_CreateUserRepository(t *testing.T) {
 	c := newClient()
-	maxI, maxJ := 50, 50
+	maxI, maxJ := 500, 10
 
 	for i := 0; i < maxI; i++ {
 		crp := &CreateRepoParams{
